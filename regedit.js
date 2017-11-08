@@ -1,6 +1,7 @@
 const { app } = require('electron');
 const Q = require('q')
 const debug = require('./debug')
+const logger = require('./log')(__filename);
 
 function Regedit() {
 
@@ -13,6 +14,7 @@ Regedit.add = function(progid) {
 }
 
 Regedit.installAll = function() {
+    logger.info(`Installing all (${Regedit.progIds.length})`);
     return Q.all(Regedit.progIds.map(progId => progId.install()))
 }
 

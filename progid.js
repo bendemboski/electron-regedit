@@ -9,6 +9,7 @@ const {$create, $set, $destroy} = require('./util')
 const ShellOption = require('./shelloption')
 const Regedit = require('./regedit')
 const debug = require('./debug')
+const logger = require('./log')(__filename);
 
 function ProgId({
     progExt = '',
@@ -29,6 +30,7 @@ function ProgId({
     this.squirrel = squirrel
     this.friendlyAppName = friendlyAppName
     this.extensions = extensions
+    logger.info(`Extensions: ${extensions.length} ${extensions}`);
     this.shell = bindShells(this, shell)
     this.BASE_KEY = `\\Software\\Classes\\${this.appName}`
     Regedit.add(this)
@@ -58,6 +60,7 @@ ProgId.prototype.uninstall = function () {
 };
 
 ProgId.prototype.install = function () {
+    logger.info('Installing');
     if(process.platform !== 'win32') {
         return false;
     }
@@ -77,11 +80,13 @@ ProgId.prototype.install = function () {
         .then(() => debug(`Installed registry "${this.progId}" sucessfully`))
 
     function registerDescription() {
+        logger.info(`Description: ${self.description}`);
         if (!self.description) return
         return $set(registry, Registry.DEFAULT_VALUE, Registry.REG_SZ, self.description)
     }
 
     function registerIcon() {
+        logger.info(`Icon: ${self.icon}`);
         if (!self.icon) return
 
         let iconPath
@@ -101,16 +106,19 @@ ProgId.prototype.install = function () {
     }
 
     function registerShellCommands() {
+        logger.info(`Shell commands: ${self.shell}`);
         let shells = self.shell.map(shell => shell.install())
         return Q.all(shells)
     }
 
     function registerFileAssociations() {
+        logger.info(`File associations: ${self.extensions}`);
         let extensions = self.extensions.map((ext) => registerFileExtension(ext))
         return Q.all(extensions)
     }
 
     function registerFileExtension(ext) {
+        logger.info(`File extension: ${ext}`);
         let registry = new Registry({
             hive: self.hive,
             key: `\\Software\\Classes\\.${ext}\\OpenWithProgids`
